@@ -1,0 +1,147 @@
+:root {
+  --bg: #0b0d10;
+  --surface: #161a20;
+  --border: #262c35;
+  --text: #f2f4f7;
+  --muted: #8b95a3;
+  --accent: #3ddc84;
+  --warn: #ffb020;
+  --danger: #ff5a5a;
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+#app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page {
+  flex: 1;
+  padding: max(16px, env(safe-area-inset-top)) 16px 16px;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.tabs {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tabs a {
+  flex: 1;
+  text-align: center;
+  padding: 14px 0;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tabs a.router-link-exact-active {
+  color: var(--accent);
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin: 0 0 16px;
+}
+
+button,
+.btn {
+  font: inherit;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  padding: 16px 20px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #04130a;
+}
+
+button.danger {
+  background: var(--danger);
+  color: #1a0505;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.banner {
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: #2a2312;
+  color: var(--warn);
+}
+
+.banner.error {
+  background: #2a1414;
+  color: var(--danger);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.row > * {
+  flex: 1;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
