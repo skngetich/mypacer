@@ -20,11 +20,13 @@ A PWA that tracks your run with GPS and **tells you your pace out loud**, so you
 The Android app is built with Capacitor from the same code. It keeps tracking and talking **with the screen locked**, lowers your music while it speaks, and shares GPX files through the normal share sheet.
 
 **Install:**
-1. On your phone, open **https://github.com/skngetich/mypacer/releases/latest/download/MyPacer.apk**. Every push to `main` publishes a new build there.
+1. On your phone, open **https://github.com/skngetich/mypacer/releases/latest/download/MyPacer.apk**. This always points to the newest release.
 2. Open the downloaded `MyPacer.apk` and allow installs from this source when asked.
 3. To update, download the link again and install over the old app; your run history is kept.
 4. On first Start, allow location (**Allow all the time** if offered) and notifications. The notification is what keeps GPS running while the phone is locked.
 5. On Samsung, Xiaomi, Huawei and similar phones, turn off battery optimisation for MyPacer (Settings → Apps → MyPacer → Battery → Unrestricted). Otherwise the phone may stop the app mid-run.
+
+**Releasing a new version:** bump `version` in `package.json` (for example `npm version 1.1.0 --no-git-tag-version`) and merge to `main`. CI then builds the APK and publishes release `v1.1.0`. The Android app's version is read from the same field. Pushes that don't change the version don't publish a release.
 
 To build it yourself: `npm run build:native`, then open `android/` in Android Studio, or run `cd android && ./gradlew assembleDebug`.
 
