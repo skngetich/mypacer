@@ -1,4 +1,7 @@
-export const wakeLockSupported = typeof navigator !== 'undefined' && 'wakeLock' in navigator
+import { isNative } from './platform'
+
+// The native app tracks with the screen off, so it never needs to hold the screen on.
+export const wakeLockSupported = !isNative && typeof navigator !== 'undefined' && 'wakeLock' in navigator
 
 let sentinel: WakeLockSentinel | null = null
 let wanted = false

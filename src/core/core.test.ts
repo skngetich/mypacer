@@ -102,6 +102,29 @@ describe('tracker', () => {
     expect(tracker.pace()).toBeCloseTo(240, 0)
   })
 
+  it('keeps current pace steady on a noisy track when the device reports speed', () => {
+    const spread = (withSpeed: boolean) => {
+      const tracker = new Tracker(0, { splitMeters: 1000, markerMeters: null, autoPause: false })
+      const paces: number[] = []
+      for (const fix of routeFixes([{ durationS: 300, pace: 300 }], { noiseM: 4, withSpeed })) {
+        tracker.addFix(fix)
+        if (fix.t >= 60_000) paces.push(tracker.pace()!)
+      }
+      return Math.max(...paces) - Math.min(...paces)
+    }
+    expect(spread(true)).toBeLessThan(1)
+    expect(spread(false)).toBeGreaterThan(10) // position-only pace is what felt jumpy
+  })
+
+  it('falls back to distance over time when speed is missing', () => {
+    const samples = [
+      { at: 0, d: 0, v: 3 },
+      { at: 15_000, d: 50, v: null },
+      { at: 30_000, d: 100, v: null },
+    ]
+    expect(rollingPace(samples)).toBeCloseTo(300)
+  })
+
   it('ignores a GPS spike', () => {
     const { tracker } = runTrack([{ durationS: 300, pace: 300 }], {}, { spikesAt: [100] })
     expect(tracker.distance).toBeCloseTo(1000, -1)

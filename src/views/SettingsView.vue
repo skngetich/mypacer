@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { formatPace } from '../core/pace'
 import { convertPace, type Unit } from '../core/units'
 import { session } from '../run/session'
+import { isNative } from '../services/platform'
 import { settings } from '../services/settings'
 import { say, setRate, unlockSpeech } from '../services/speech'
 
@@ -29,7 +30,8 @@ function testVoice() {
 }
 
 const isIos = /iP(hone|ad|od)/.test(navigator.userAgent)
-const standalone = window.matchMedia('(display-mode: standalone)').matches
+// Installed as a PWA or running as the native app: no install hint needed.
+const standalone = isNative || window.matchMedia('(display-mode: standalone)').matches
 </script>
 
 <template>

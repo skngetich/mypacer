@@ -1,5 +1,10 @@
+import { registerPlugin } from '@capacitor/core'
+import type { BackgroundGeolocationPlugin } from '@capacitor-community/background-geolocation'
 import type { Fix } from '../core/geo'
 import { routeFixes, type Leg } from '../core/simroute'
+import { isNative } from './platform'
+
+const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation')
 
 export interface LocationSource {
   readonly simulated: boolean
@@ -44,6 +49,55 @@ export class GeolocationSource implements LocationSource {
   stop() {
     if (this.watchId != null) navigator.geolocation.clearWatch(this.watchId)
     this.watchId = null
+  }
+}
+
+/** Native GPS via a foreground service, so tracking continues with the screen locked. */
+export class NativeLocationSource implements LocationSource {
+  readonly simulated = false
+  private watcherId: string | null = null
+  private stopped = false
+
+  now() {
+    return Date.now()
+  }
+
+  start(onFix: (fix: Fix) => void, onError: (message: string, fatal: boolean) => void) {
+    this.stopped = false
+    BackgroundGeolocation.addWatcher(
+      {
+        backgroundTitle: 'MyPacer is tracking your run',
+        backgroundMessage: 'Pace updates continue while your phone is locked.',
+        requestPermissions: true,
+        stale: false,
+        distanceFilter: 0,
+      },
+      (loc, err) => {
+        if (err) {
+          const denied = err.code === 'NOT_AUTHORIZED'
+          onError(denied ? 'Location permission denied. Allow location for MyPacer in your phone settings.' : err.message, denied)
+          return
+        }
+        if (!loc) return
+        onFix({
+          t: loc.time ?? Date.now(),
+          lat: loc.latitude,
+          lon: loc.longitude,
+          acc: loc.accuracy,
+          alt: loc.altitude,
+          speed: loc.speed,
+        })
+      },
+    ).then((id) => {
+      if (this.stopped) void BackgroundGeolocation.removeWatcher({ id })
+      else this.watcherId = id
+    })
+  }
+
+  stop() {
+    this.stopped = true
+    if (this.watcherId) void BackgroundGeolocation.removeWatcher({ id: this.watcherId })
+    this.watcherId = null
   }
 }
 
@@ -92,5 +146,6 @@ export function simSpeedup(): number | null {
 
 export function createSource(): LocationSource {
   const speedup = simSpeedup()
-  return speedup ? new SimulatedSource(speedup) : new GeolocationSource()
+  if (speedup) return new SimulatedSource(speedup)
+  return isNative ? new NativeLocationSource() : new GeolocationSource()
 }

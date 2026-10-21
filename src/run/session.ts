@@ -8,6 +8,7 @@ import { Tracker, type TrackerEvent } from '../core/tracker'
 import { METERS_PER, paceInUnit, type Unit } from '../core/units'
 import { clearCurrent, saveCurrent, saveRun } from '../services/db'
 import { createSource, type LocationSource } from '../services/location'
+import { isNative } from '../services/platform'
 import { settings } from '../services/settings'
 import { say, setRate, unlockSpeech } from '../services/speech'
 import { allowSleep, keepAwake } from '../services/wakelock'
@@ -88,7 +89,10 @@ function onFix(fix: Fix) {
     if (fix.acc > READY_ACCURACY_M) return
     begin(fix.t)
   }
-  if (tracker) handle(tracker.addFix(fix))
+  if (!tracker) return
+  handle(tracker.addFix(fix))
+  // Timers are throttled while the phone is locked; GPS updates keep time and target announcements on schedule.
+  announce()
 }
 
 function onError(message: string, fatal: boolean) {
@@ -115,10 +119,14 @@ function begin(t: number) {
   saveTimer = setInterval(() => void saveCurrent(record()), AUTOSAVE_MS)
 }
 
+function announce() {
+  for (const text of announcer!.tick(snapshot())) speak(text)
+}
+
 function tick() {
   if (!tracker || !source) return
   handle(tracker.tick(source.now()))
-  for (const text of announcer!.tick(snapshot())) speak(text)
+  announce()
 }
 
 function record(): RunRecord {
@@ -207,7 +215,8 @@ export function announceNow() {
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (session.phase === 'idle') return
+  // The native app keeps tracking in the background, so there's no gap to warn about.
+  if (isNative || session.phase === 'idle') return
   if (document.visibilityState === 'hidden') {
     hiddenAt = Date.now()
   } else if (hiddenAt != null) {

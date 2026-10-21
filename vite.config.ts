@@ -3,11 +3,15 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// TARGET=native builds the bundle for the Capacitor app: served from the app root, no service worker.
+const native = process.env.TARGET === 'native'
+
 export default defineConfig({
-  base: process.env.BASE_PATH ?? '/mypacer/',
+  base: native ? '/' : (process.env.BASE_PATH ?? '/mypacer/'),
   plugins: [
     vue(),
     VitePWA({
+      disable: native,
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
