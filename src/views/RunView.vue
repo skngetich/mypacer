@@ -7,6 +7,7 @@ import TapLock from '../components/TapLock.vue'
 import { displayPace, formatDistance, formatDuration } from '../core/pace'
 import type { RunRecord } from '../core/run'
 import { clearCurrent, getCurrent, saveRun } from '../services/db'
+import { isNative } from '../services/platform'
 import { speechSupported } from '../services/speech'
 import { wakeLockSupported } from '../services/wakelock'
 import { announceNow, pause, resume, session, start, stop } from '../run/session'
@@ -57,7 +58,10 @@ async function onStop() {
     <div v-if="session.gapNotice" class="banner" @click="session.gapNotice = false">
       The app was in the background, so GPS was paused. The gap is filled with a straight line. Keep MyPacer on screen while running. (Tap to dismiss)
     </div>
-    <div v-if="session.phase === 'idle' && !wakeLockSupported" class="banner">
+    <p v-if="session.phase === 'idle' && isNative" class="muted hint">
+      You can lock your phone during a run. MyPacer keeps tracking and talking.
+    </p>
+    <div v-else-if="session.phase === 'idle' && !wakeLockSupported" class="banner">
       This browser can't keep the screen on. Set your phone's auto-lock to "Never" while running.
     </div>
     <div v-if="!speechSupported" class="banner error">This browser can't speak, so you won't hear voice updates.</div>
@@ -168,7 +172,8 @@ async function onStop() {
   min-height: 80px;
   font-size: 1.5rem;
 }
-.said {
+.said,
+.hint {
   text-align: center;
   margin: 0;
 }

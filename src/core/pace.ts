@@ -4,13 +4,22 @@ import { paceInUnit, toUnit, type Unit } from './units'
 export interface Sample {
   at: number
   d: number
+  /** Device-reported (Doppler) speed in m/s, if available */
+  v?: number | null
 }
 
 export const PACE_WINDOW_MS = 30_000
 const MIN_WINDOW_MS = 10_000
 const MIN_WINDOW_M = 10
+/** Share of samples in the window that must carry a device speed to use it. */
+const MIN_SPEED_COVERAGE = 0.8
+/** Below this average speed (m/s) the runner is effectively stopped. */
+const MIN_MOVING_SPEED = 0.3
 
-/** Rolling pace over the last `windowMs` of active time, in seconds per km. Null if not enough data. */
+/**
+ * Rolling pace over the last `windowMs` of active time, in seconds per km. Null if not enough data.
+ * Prefers the average device speed, which is far steadier than differencing jittery positions.
+ */
 export function rollingPace(samples: readonly Sample[], windowMs = PACE_WINDOW_MS): number | null {
   if (samples.length < 2) return null
   const last = samples[samples.length - 1]
@@ -18,8 +27,16 @@ export function rollingPace(samples: readonly Sample[], windowMs = PACE_WINDOW_M
   while (i > 0 && samples[i - 1].at >= last.at - windowMs) i--
   const first = samples[i]
   const dt = last.at - first.at
+  if (dt < MIN_WINDOW_MS) return null
+
+  const speeds = samples.slice(i).flatMap((s) => (s.v != null && s.v >= 0 ? [s.v] : []))
+  if (speeds.length >= MIN_SPEED_COVERAGE * (samples.length - i)) {
+    const mean = speeds.reduce((a, b) => a + b, 0) / speeds.length
+    return mean < MIN_MOVING_SPEED ? null : 1000 / mean
+  }
+
   const dd = last.d - first.d
-  if (dt < MIN_WINDOW_MS || dd < MIN_WINDOW_M) return null
+  if (dd < MIN_WINDOW_M) return null
   return dt / dd // ms per m == s per km
 }
 

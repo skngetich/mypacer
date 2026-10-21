@@ -7,7 +7,10 @@ import SplitsTable from '../components/SplitsTable.vue'
 import { runName, toGpx } from '../core/gpx'
 import { averagePace, displayPace, formatDistance, formatDuration } from '../core/pace'
 import type { RunRecord } from '../core/run'
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem'
+import { Share } from '@capacitor/share'
 import { deleteRun, getRun } from '../services/db'
+import { isNative } from '../services/platform'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
@@ -22,6 +25,7 @@ onMounted(async () => {
 async function exportGpx() {
   const r = run.value!
   const name = `${runName(r)}.gpx`
+  if (isNative) return shareNative(name, toGpx(r))
   const file = new File([toGpx(r)], name, { type: 'application/gpx+xml' })
   if (navigator.canShare?.({ files: [file] })) {
     try {
@@ -37,6 +41,16 @@ async function exportGpx() {
   a.download = name
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+/** WebViews can't share File objects, so write the GPX to the app cache and use the system share sheet. */
+async function shareNative(name: string, gpx: string) {
+  const { uri } = await Filesystem.writeFile({ path: name, data: gpx, directory: Directory.Cache, encoding: Encoding.UTF8 })
+  try {
+    await Share.share({ title: name, files: [uri] })
+  } catch {
+    // Share sheet dismissed.
+  }
 }
 
 async function remove() {

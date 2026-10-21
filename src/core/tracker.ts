@@ -14,6 +14,8 @@ export interface TrackPoint {
   d: number
   /** Segment number; a new segment starts after every pause */
   seg: number
+  /** Device-reported speed in m/s */
+  v?: number | null
 }
 
 export type TrackerEvent =
@@ -116,7 +118,7 @@ export class Tracker {
 
     const at = this.elapsed(fix.t)
     const last = this.points.at(-1)
-    const base = { t: fix.t, lat: fix.lat, lon: fix.lon, alt: fix.alt ?? null, at }
+    const base = { t: fix.t, lat: fix.lat, lon: fix.lon, alt: fix.alt ?? null, at, v: fix.speed ?? null }
     if (!last || this.newSegment) {
       this.points.push({ ...base, d: last?.d ?? 0, seg: last ? last.seg + 1 : 0 })
       this.newSegment = false
